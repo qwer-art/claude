@@ -23,7 +23,12 @@
       "Bash(sudo:*)",
       "Bash(./vo_test:*)",
       "Bash(python:*)",
-      "Bash(ln:*)"
+      "Bash(ln:*)",
+      "Bash(git clone:*)",
+      "Bash(wget:*)",
+      "Bash(curl:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }
