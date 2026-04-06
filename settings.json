@@ -1,0 +1,29 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "196bd984f19f48faa9065f9c1d44f640.3kX4DRbDexgU3IJG",
+    "ANTHROPIC_BASE_URL": "https://open.bigmodel.cn/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "HTTP_PROXY": "http://127.0.0.1:7890",
+    "HTTPS_PROXY": "http://127.0.0.1:7890",
+    "http_proxy": "http://127.0.0.1:7890",
+    "https_proxy": "http://127.0.0.1:7890"
+  },
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Bash(chmod:*)",
+      "Bash(ros2 --version:*)",
+      "Bash(ros2 run:*)",
+      "Bash(tree:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(sudo:*)",
+      "Bash(./vo_test:*)",
+      "Bash(python:*)",
+      "Bash(ln:*)"
+    ]
+  }
+}

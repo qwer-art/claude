@@ -1,0 +1,25 @@
+# Runtime and temporary data
+debug/
+sessions/
+session-env/
+shell-snapshots/
+
+# Cache and generated data
+cache/
+file-history/
+stats-cache.json
+history.jsonl
+
+# Analytics and telemetry
+telemetry/
+statsig/
+
+# Backups
+backups/
+
+# Temporary state
+todos/
+ide/
+
+# Project session history and memory
+projects/
