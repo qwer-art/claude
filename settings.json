@@ -8,7 +8,7 @@
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "GLM-5.1",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "GLM-5.1",
     "API_TIMEOUT_MS": "3000000",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
   "permissions": {
     "allow": [
@@ -32,7 +32,11 @@
       "Bash(ros2 :*)",
       "Bash(./vo_test :*)",
       "Bash(du -sh :*)",
-      "Bash(cat :*)"
+      "Bash(cat :*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(gh repo :*)",
+      "Bash(gh auth :*)"
     ]
   }
 }
