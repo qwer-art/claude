@@ -36,7 +36,8 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(gh repo :*)",
-      "Bash(gh auth :*)"
+      "Bash(gh auth :*)",
+      "Edit(~/.claude/skills/paper-reader/**)"
     ]
   }
 }
