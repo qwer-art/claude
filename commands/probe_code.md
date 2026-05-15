@@ -219,10 +219,118 @@ if __name__ == "__main__":
 
 ## 参考示例
 
-参考实现：`/home/jerett/OpenProject/MyAgent/probe_code/gaussfusion_probe.py`
+以下是优秀的探针代码示例片段，展示了清晰的模块注释、准确的维度追踪、详细的参数统计和完整的测试流程：
 
-这是一个优秀的探针代码示例，展示了：
-- 清晰的模块注释
-- 准确的维度追踪
-- 详细的参数统计
-- 完整的测试流程
+### 模块注释示例
+
+```python
+# ============================================================
+# 模块2: VAE Encoder
+# ============================================================
+# 输入: torch.Size([B, T, H, W, 3]) - RGB视频
+# 输出: torch.Size([B, T/4, H/8, W/8, 16]) - 压缩后的latent
+# 参数: 704,976
+# 压缩比: 48x (时序4x × 空间8x / 通道扩展5.33x)
+# 关键步骤:
+#   1. 时序压缩: T帧 → T/4组，每组4帧合并为12通道
+#   2. 空间编码: 3层stride=2卷积 (H,W→H/8,W/8)
+#   3. 通道投影: 12通道 → 16维latent
+#   4. 恢复batch维度: (B*T/4, 16, H/8, W/8) → (B, T/4, H/8, W/8, 16)
+
+class VAEEncoder(nn.Module):
+    """VAE编码器: RGB视频 -> Latent (压缩32x)"""
+
+    def __init__(self, in_channels=3, latent_channels=16):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(in_channels * 4, 64, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(256, latent_channels, kernel_size=3, stride=1, padding=1),
+        )
+
+    def forward(self, x):
+        B, T, H, W, C = x.shape
+        T_new = T // 4
+        x = x.view(B, T_new, 4, H, W, C).permute(0, 1, 3, 4, 5, 2).contiguous()
+        x = x.view(B * T_new, H, W, C * 4).permute(0, 3, 1, 2)
+        z = self.encoder(x)
+        z = z.view(B, T_new, z.shape[1], z.shape[2], z.shape[3]).permute(0, 1, 3, 4, 2)
+        return z
+```
+
+### 核心创新模块注释示例
+
+```python
+# ============================================================
+# 模块5: Geometry Adapter (核心创新)
+# ============================================================
+# 输入:
+#   z_G:      torch.Size([B, T/4, H/8, W/8, 64])  - 几何特征
+#   z_latent: torch.Size([B, T/4, H/8, W/8, 16])  - RGB latent
+#   z_text:   torch.Size([B, 768])              - 文本特征 (可选)
+# 输出: torch.Size([B, T/4, H/8, W/8, 16]) - 条件化特征
+# 参数: 23,457
+# 关键步骤:
+#   1. 几何投影: 64维 → 16维 (geo_proj)
+#   2. 文本融合: 768维 → 16维，加到几何特征上 (text_proj)
+#   3. 门控计算: MLP(z_latent + z_G) → gate ∈ [0,1]
+#   4. 特征融合: concat(z_latent, z_G_proj) → Conv → z_fused
+#   5. 门控输出: x_g = gate * z_fused + (1-gate) * z_latent
+# 核心创新: 自适应学习何时信任几何先验
+
+class GeometryAdapter(nn.Module):
+    """几何适配器: 将几何特征注入到生成流程"""
+    ...
+```
+
+### 测试函数示例
+
+```python
+def run_test(batch_size=1, num_frames=8, height=120, width=208):
+    """运行完整的探针测试"""
+    print("\n" + "="*80)
+    print("GaussFusion 探针代码")
+    print("="*80)
+    print(f"配置: batch_size={batch_size}, frames={num_frames}, size={height}x{width}")
+    print("="*80 + "\n")
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    all_params = OrderedDict()
+
+    # 步骤1: 模块测试
+    print(">>> 步骤1: GP-Buffer 模拟器")
+    gp_simulator = GPBufferSimulator(height, width, num_frames).to(device)
+    gp_buffer = gp_simulator(batch_size)
+    print(f"  输出: {gp_buffer.shape}")
+    print(f"  参数: {sum(p.numel() for p in gp_simulator.parameters()):,}")
+    all_params['gp_buffer'] = count_parameters(gp_simulator)
+
+    # ... 更多模块测试 ...
+
+    # 参数量总结
+    print("\n" + "="*80)
+    print("参数量总结")
+    print("="*80)
+    total_trainable = 0
+    for name, params in all_params.items():
+        trainable = params['trainable']
+        total = params['total']
+        total_trainable += trainable
+        pct = (trainable / total * 100) if total > 0 else 0
+        print(f"  {name:20s}: {total:>10,} | 可训练: {trainable:>10,} ({pct:5.1f}%)")
+    print("="*80)
+    print(f"  {'总计':20s}: {sum(p['total'] for p in all_params.values()):>10,} | 可训练: {total_trainable:>10,}")
+    print("="*80)
+
+    # 梯度检查
+    print("\n>>> 检查梯度流动")
+    loss.backward()
+    for name, module in [('GP-Buffer', gp_simulator), ('VAE-Enc', vae_encoder), ...]:
+        has_grad = any(p.grad is not None for p in module.parameters() if p.requires_grad)
+        print(f"  {'✓' if has_grad else '✗'} {name:12s}")
+
+    print("\n" + "="*80)
+    print("测试完成!")
+    print("="*80 + "\n")
+```
