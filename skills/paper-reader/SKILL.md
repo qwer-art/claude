@@ -17,7 +17,7 @@ description: Downloads arXiv papers and performs expert-level deep analysis. Sup
 4. **提取核心内容**：论点、方法、假设、近似、局限
 5. **分析数学推导**：理解建模方法和算法细节
 6. **生成结构化输出**：markdown格式的分析报告，以核心五问开头
-7. **保存分析文档**：将分析报告保存到 notes 文件夹中
+7. **保存分析文档**：将分析报告保存到 `analysis/<category>/<Method_Name>/` 目录下，按领域类别分门别类
 
 ## 论文获取方式
 
@@ -31,26 +31,75 @@ description: Downloads arXiv papers and performs expert-level deep analysis. Sup
    - 从用户输入提取 `ARXIV_ID`（如 `https://arxiv.org/abs/2602.11124` → `2602.11124`）
    - 确定 `METHOD_NAME`（如 "PhyCritic"）。若用户未提供，尝试从论文标题提取或询问用户
    - 确定 `BASE_DIR`：若用户指定了目录则使用该目录，否则使用当前工作目录
-   - `TARGET_DIR = <BASE_DIR>/papers/<METHOD_NAME>`
-   - `TARGET_NOTES_DIR = <BASE_DIR>/notes/<METHOD_NAME>.md`
+   - 确定 `CATEGORY`：论文所属领域类别（如 diffusion、wam、slam、occ、gs、detect 等）。若不确定，从论文主题推断或询问用户
+   - `PAPER_DIR = <BASE_DIR>/raw_data/<METHOD_NAME>/paper`（论文源码，不跟踪）
+   - `ANALYSIS_DIR = <BASE_DIR>/analysis/<CATEGORY>/<METHOD_NAME>`（分析结果，跟踪）
+   - `ANALYSIS_FILE = <ANALYSIS_DIR>/<METHOD_NAME>_<ARXIV_ID>_分析.md`
 
 2. **下载论文源码**：
    ```bash
-   bash <SKILL_DIR>/scripts/download_arxiv.sh <ARXIV_ID> <TARGET_DIR>
+   bash <SKILL_DIR>/scripts/download_arxiv.sh <ARXIV_ID> <PAPER_DIR>
    ```
    其中 `<SKILL_DIR>` 为本技能所在目录（通常为 `~/.claude/skills/paper-reader`）。
 
-3. **分析论文**：读取下载的 LaTeX/PDF 源码，按下方分析流程生成报告，保存至 `TARGET_NOTES_DIR`。
+3. **分析论文**：读取下载的 LaTeX/PDF 源码，按下方分析流程生成报告，保存至 `ANALYSIS_FILE`。
 
 ### 方式二：本地文件（直接分析）
 
-当用户提供本地 PDF 或 tex 文件路径时，直接读取并分析，保存至 `paper_reader/` 文件夹。
+当用户提供本地 PDF 或 tex 文件路径时，直接读取并分析，保存至 `analysis/<category>/<Method_Name>/` 目录下。
 
 ## 目录结构约定
 
-下载+分析模式下，默认在 `BASE_DIR` 下创建：
-- `papers/` — 存放论文 LaTeX 源码（每篇一个子目录）
-- `notes/` — 存放对应的 Markdown 审稿笔记
+项目采用**原始数据与分析结果分离**的组织方式：
+
+- `raw_data/` — 存放论文源码、代码等原始数据（**不跟踪**，加入 .gitignore）
+- `analysis/` — 存放分析报告（**跟踪**，纳入版本控制）
+
+```
+raw_data/                                    # 不跟踪
+├── dreamzero/
+│   ├── paper/                               # 论文 LaTeX/PDF 源码
+│   └── code/                                # 开源代码（如有）
+├── SurroundOcc/
+│   ├── paper/
+│   └── code/
+└── ...
+
+analysis/                                    # 跟踪
+├── diffusion/          # 扩散模型类（DDPM, Flow Matching, DiT, Stable Diffusion 等）
+│   └── <Method_Name>/
+│       └── <Method_Name>_<ARXIV_ID>_分析.md
+├── wam/                # 世界模型/世界行动模型类（DreamZero 等）
+│   └── <Method_Name>/
+│       └── <Method_Name>_<ARXIV_ID>_分析.md
+├── slam/               # SLAM类（LIO-SAM, VINS, COLMAP 等）
+│   └── <Method_Name>/
+│       └── <Method_Name>.md
+├── occ/                # 占据网格/3D感知类（SurroundOcc, Fast-Pillars 等）
+│   └── <Method_Name>/
+│       └── <Method_Name>.md
+├── gs/                 # 3D Gaussian Splatting类
+│   └── <Method_Name>/
+│       └── <Method_Name>_<ARXIV_ID>_分析.md
+├── detect/             # 检测类
+│   └── <Method_Name>/
+│       └── <Method_Name>.md
+└── ...                 # 其他领域按需创建
+```
+
+### 关键规则
+
+1. **必须确定类别**：分析前先确定论文所属领域类别（如 diffusion、wam、slam、occ、gs、detect 等）。若不确定，询问用户或根据论文主题推断
+2. **论文源码路径**：`<BASE_DIR>/raw_data/<METHOD_NAME>/paper/`（不跟踪）
+3. **分析结果路径**：`<BASE_DIR>/analysis/<CATEGORY>/<METHOD_NAME>/<METHOD_NAME>_<ARXIV_ID>_分析.md`
+   - 若无 arXiv ID，文件名为 `<METHOD_NAME>.md`
+   - `BASE_DIR` 默认为当前工程根目录
+4. **类别推断示例**：
+   - DreamZero → `wam`（世界行动模型）
+   - Flow Matching → `diffusion`
+   - SurroundOcc → `occ`
+   - LIO-SAM → `slam`
+   - 3DGUT → `gs`
 
 ### 文档结构
 生成的markdown文档应包含以下部分：
